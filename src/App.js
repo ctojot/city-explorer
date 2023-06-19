@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
-
+import './App.css';
+import Image from 'react-bootstrap/Image';
 
 class App extends React.Component {
   constructor(props) {
@@ -24,8 +25,8 @@ class App extends React.Component {
     event.preventDefault();
 
     try {
-      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city}&format=json`;
-      let cityDataFromAxios = await axios.get(url);
+      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
+      let cityDataFromAxios = await axios.get(url,{headers:{ "Access-Control-Allow-Origin": "*" }});
       let data = cityDataFromAxios.data;
 
       if (data.length > 0) {
@@ -57,29 +58,29 @@ class App extends React.Component {
 
   render() {
     return (
-      <>
-        <h1>City Explorer</h1>
-        <form onSubmit={this.handleGetCityInfo}>
-          <label htmlFor=''> Enter City Name:
-            <input type='text' onChange={this.handleGetCityInput} />
+      <div className='app-cont'>
+        <h1 className='text-shadow'>City Explorer</h1>
+        <form onSubmit={this.handleGetCityInfo} className='form-cont'>
+          <label htmlFor='' className='text-shadow'> Enter City Name
+            <input type='text' onChange={this.handleGetCityInput} className='text-input'/>
           </label>
-          <button type='submit'>Explore!</button>
+          <button type='submit' className='sub-btn'>Explore!</button>
         </form>
 
         {
           this.state.error
-            ? <p>{this.state.errorMsg}</p>
+            ? <p className='err-msg'>{this.state.errorMsg}</p>
             : (
               <div className='content'>
-                <p>{this.state.locationData.display_name}</p>
-                <p>Latitude: {this.state.locationData.latitude}</p>
-                <p>Longitude: {this.state.locationData.longitude}</p>
-                {this.state.mapImageUrl && <img src={this.state.mapImageUrl} alt='City Map' />}
+                <p className='text-shadow'>{this.state.locationData.display_name}</p>
+                <p className='text-shadow'>Latitude: {this.state.locationData.latitude}</p>
+                <p className='text-shadow'>Longitude: {this.state.locationData.longitude}</p>
+                {this.state.mapImageUrl && <Image rounded src={this.state.mapImageUrl} alt='City Map' />}
               </div>
             )
         }
-        <footer>Author: ChristianRhey Tojot</footer>
-      </>
+        <footer className='footer text-shadow'>Author: ChristianRhey Tojot</footer>
+      </div>
     )
   }
 };

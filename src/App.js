@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import './App.css';
 import Image from 'react-bootstrap/Image';
+import Weather from './Weather';
 
 class App extends React.Component {
   constructor(props) {
@@ -12,6 +13,7 @@ class App extends React.Component {
       error: false,
       errorMsg: '',
       mapImageUrl: '',
+      weather: {date: '', description: ''},
     }
   }
 
@@ -25,8 +27,8 @@ class App extends React.Component {
     event.preventDefault();
 
     try {
-      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
-      let cityDataFromAxios = await axios.get(url,{headers:{ "Access-Control-Allow-Origin": "*" }});
+      let url = `https://us1.locationiq.com/v1/search.php?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
+      let cityDataFromAxios = await axios.get(url);
       let data = cityDataFromAxios.data;
 
       if (data.length > 0) {
@@ -39,6 +41,10 @@ class App extends React.Component {
           mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${data[0].lat},${data[0].lon}&zoom=10`,
           error: false,
           errorMsg: ''
+        })
+        let weatherDataFromAxios = await axios.get(`http://localhost:3001/weather?searchQuery=${this.state.city.toLowerCase()}&lat=${data[0].lat}&lon=${data[0].lon}`)
+        this.setState({
+          weather: {description: weatherDataFromAxios.description, date: weatherDataFromAxios.date}
         })
       } else {
         this.setState({
@@ -57,6 +63,7 @@ class App extends React.Component {
   }
 
   render() {
+    const isWeatherValid = (this.state.weather.date && this.state.weather.description)
     return (
       <div className='app-cont'>
         <h1 className='text-shadow'>City Explorer</h1>
@@ -76,6 +83,12 @@ class App extends React.Component {
                 <p className='text-shadow'>Latitude: {this.state.locationData.latitude}</p>
                 <p className='text-shadow'>Longitude: {this.state.locationData.longitude}</p>
                 {this.state.mapImageUrl && <Image rounded src={this.state.mapImageUrl} alt='City Map' />}
+                {isWeatherValid && 
+                <Weather
+                  date={this.state.weather.date}
+                  description={this.state.weather.description}
+                />
+                }
               </div>
             )
         }

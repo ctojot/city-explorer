@@ -3,6 +3,7 @@ import axios from 'axios';
 import './App.css';
 import Image from 'react-bootstrap/Image';
 import Weather from './Weather';
+import Movie from './Movie';
 
 class App extends React.Component {
   constructor(props) {
@@ -14,6 +15,8 @@ class App extends React.Component {
       errorMsg: '',
       mapImageUrl: '',
       weather: {date: '', description: ''},
+      movieData: [],
+      weatherData: []
     }
   }
 
@@ -27,7 +30,7 @@ class App extends React.Component {
     event.preventDefault();
 
     try {
-      let url = `https://us1.locationiq.com/v1/search.php?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
+      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
       let cityDataFromAxios = await axios.get(url);
       let data = cityDataFromAxios.data;
 
@@ -62,6 +65,43 @@ class App extends React.Component {
     }
   }
 
+  getWeather = async (lat, lon) => {
+    try {
+      let weatherUrl = `${process.env.REACT_APP_SERVER}/weather?lat=${lat}&lon=${lon}`;
+      let weatherAxiosData = await axios.get(weatherUrl);
+      let weatherData = weatherAxiosData.data;
+      this.setState({
+        weatherData,
+        error: false,
+        errorMsg: ''
+      })
+    } catch (error) {
+      this.setState({
+        error: true,
+        errorMsg: error.message
+      })
+    }
+  }
+
+  getMovies = async () => {
+    try {
+      let movieUrl = `${process.env.REACT_APP_SERVER}/movie?searchQuery=${this.state.city}`;
+      let movieAxiosData = await axios.get(movieUrl);
+      let movieData = movieAxiosData.data;
+
+      this.setState({
+        movieData,
+        error: false,
+        errorMsg: ''
+      })
+    } catch (error) {
+      this.setState({
+        error: true,
+        errorMsg: error.message
+      })
+    }
+  }
+
   render() {
     const isWeatherValid = (this.state.weather.date && this.state.weather.description)
     return (
@@ -89,6 +129,10 @@ class App extends React.Component {
                   description={this.state.weather.description}
                 />
                 }
+                {this.state.movies.length > 0 && (
+                    <Movie movies={this.state.movies}/>
+                 
+                )}
               </div>
             )
         }

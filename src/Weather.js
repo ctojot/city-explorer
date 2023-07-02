@@ -1,11 +1,17 @@
-import React from 'react';
+import React from "react";
+import WeatherDay from './WeatherDay';
 
-
-export default function Weather({date, description}) {
+class Weather extends React.Component {
+  render() {
     return (
-        <>
-            <p className='text-shadow'>Date: {date}</p>
-            <p className='text-shadow'>Description: {description}</p>
-        </>
+      <>
+        <h1>Weather Forecast</h1>
+        {this.props.forecastData.map((day, index) => {
+              return<WeatherDay day={day} key={index}></WeatherDay>                          
+          })};
+      </>
     )
+  }
 }
+
+export default Weather;

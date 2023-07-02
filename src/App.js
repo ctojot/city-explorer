@@ -46,7 +46,7 @@ class App extends React.Component {
       })
 
       this.handGetWeatherInfo(axiosCityData.data[0].lat, axiosCityData.data[0].lon)
-      // this.handleGetMovieInfo(this.state.city);
+      this.handleGetMovieInfo(this.state.city);
 
       let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
 

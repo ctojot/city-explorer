@@ -10,8 +10,8 @@ class App extends React.Component {
     super(props)
     this.state = {
       city: '',
-      lat: '',
-      lon: '',
+      latitude: '',
+      longitude: '',
       locationData: [],
       mapData: '',
       error: false,
@@ -37,15 +37,15 @@ class App extends React.Component {
 
       this.setState({
         locationData: axiosCityData.data[0],
-        latitude: axiosCityData[0].lat,
-        longitude: axiosCityData[0].lon,
+        latitude: axiosCityData[0].latitude,
+        longitude: axiosCityData[0].longitude,
         display_name: axiosCityData[0].display_name,
         mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${axiosCityData.data[0].lat},${axiosCityData.data[0].lon}&zoom=12&size=<width>x<height>&format=<format>&maptype=<MapType>&markers=icon:<icon>|<latitude>,<longitude>&markers=icon:<icon>|<latitude>,<longitude>`,
         error: false,
         errorMsg: ''
       })
 
-      this.handGetWeatherInfo(axiosCityData.data[0].lat, axiosCityData.data[0].lon)
+      this.handGetWeatherInfo(axiosCityData.data[0].latitude, axiosCityData.data[0].longitude)
       
       let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
       let movieDataFromAxios = await axios.get(movieURL);

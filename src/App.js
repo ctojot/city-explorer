@@ -40,13 +40,13 @@ class App extends React.Component {
         latitude: axiosCityData[0].lat,
         longitude: axiosCityData[0].lon,
         display_name: axiosCityData[0].display_name,
-        mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${axiosCityData.data[0].lat},${axiosCityData.data[0].lon}&zoom=10`,
+        mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${axiosCityData.data[0].lat},${axiosCityData.data[0].lon}&zoom=12&size=<width>x<height>&format=<format>&maptype=<MapType>&markers=icon:<icon>|<latitude>,<longitude>&markers=icon:<icon>|<latitude>,<longitude>`,
         error: false,
         errorMsg: ''
       })
 
       this.handGetWeatherInfo(axiosCityData.data[0].lat, axiosCityData.data[0].lon)
-      this.handleGetMovieInfo(this.state.city);
+      // this.handleGetMovieInfo(this.state.city);
 
       let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
 
@@ -61,9 +61,6 @@ class App extends React.Component {
       this.setState({
         error: true,
         errorMsg: 'Error fetching data, ' + error.message,
-        mapImageUrl: '',
-        forecastData: [],
-        movies: []
       });
     }
   }
@@ -94,25 +91,6 @@ class App extends React.Component {
       this.setState({
         error: true,
         errorMsg: 'Error fetching data, ' + error.message,
-        forecastData: []
-      })
-    }
-  }
-
-  getMovies = async (searchQuery) => {
-    try {
-      let movieUrl = `${process.env.REACT_APP_SERVER}/movie?searchQuery=${searchQuery}`;
-      let movieAxiosData = await axios.get(movieUrl);
-      let movies = movieAxiosData.data;
-
-      this.setState({
-        movies: movies
-      })
-    } catch (error) {
-      this.setState({
-        error: true,
-        errorMsg: 'Error fetching data, ' + error.message,
-        moives: []
       })
     }
   }

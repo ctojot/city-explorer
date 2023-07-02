@@ -32,7 +32,7 @@ class App extends React.Component {
     event.preventDefault();
 
     try {
-      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
+      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city}&format=json`;
       let axiosCityData = await axios.get(url);
 
       this.setState({
@@ -46,15 +46,12 @@ class App extends React.Component {
       })
 
       this.handGetWeatherInfo(axiosCityData.data[0].lat, axiosCityData.data[0].lon)
-      this.handleGetMovieInfo(this.state.city);
-
+      
       let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
-
       let movieDataFromAxios = await axios.get(movieURL);
 
       this.setState({
         movieData: movieDataFromAxios.data
-
       })
 
     } catch (error) {

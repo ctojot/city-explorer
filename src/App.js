@@ -99,23 +99,23 @@ class App extends React.Component {
     }
   }
 
-  // getMovies = async (searchQuery) => {
-  //   try {
-  //     let movieUrl = `${process.env.REACT_APP_SERVER}/movie?searchQuery=${searchQuery}`;
-  //     let movieAxiosData = await axios.get(movieUrl);
-  //     let movies = movieAxiosData.data;
+  getMovies = async (searchQuery) => {
+    try {
+      let movieUrl = `${process.env.REACT_APP_SERVER}/movie?searchQuery=${searchQuery}`;
+      let movieAxiosData = await axios.get(movieUrl);
+      let movies = movieAxiosData.data;
 
-  //     this.setState({
-  //       movies: movies
-  //     })
-  //   } catch (error) {
-  //     this.setState({
-  //       error: true,
-  //       errorMsg: 'Error fetching data, ' + error.message,
-  //       moives: []
-  //     })
-  //   }
-  // }
+      this.setState({
+        movies: movies
+      })
+    } catch (error) {
+      this.setState({
+        error: true,
+        errorMsg: 'Error fetching data, ' + error.message,
+        moives: []
+      })
+    }
+  }
 
   render() {
     return (

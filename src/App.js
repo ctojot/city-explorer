@@ -3,20 +3,22 @@ import axios from 'axios';
 import './App.css';
 import Image from 'react-bootstrap/Image';
 import Weather from './Weather';
-import Movie from './Movie';
+import Movies from './Movies';
 
 class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       city: '',
+      lat: '',
+      lon: '',
       locationData: [],
+      mapData: '',
       error: false,
       errorMsg: '',
       mapImageUrl: '',
-      weather: {date: '', description: ''},
+      forecastData: [],
       movieData: [],
-      weatherData: []
     }
   }
 
@@ -31,85 +33,97 @@ class App extends React.Component {
 
     try {
       let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city.toLowerCase()}&format=json`;
-      let cityDataFromAxios = await axios.get(url);
-      let data = cityDataFromAxios.data;
+      let axiosCityData = await axios.get(url);
 
-      if (data.length > 0) {
-        this.setState({
-          locationData: {
-            latitude: data[0].lat,
-            longitude: data[0].lon,
-            display_name: data[0].display_name,
-          },
-          mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${data[0].lat},${data[0].lon}&zoom=10`,
-          error: false,
-          errorMsg: ''
-        })
-        let weatherDataFromAxios = await axios.get(`http://localhost:3001/weather?searchQuery=${this.state.city.toLowerCase()}&lat=${data[0].lat}&lon=${data[0].lon}`)
-        this.setState({
-          weather: {description: weatherDataFromAxios.description, date: weatherDataFromAxios.date}
-        })
-      } else {
-        this.setState({
-          error: true,
-          errorMsg: 'No Results',
-          mapImageUrl: '',
-        });
-      }
+      this.setState({
+        locationData: axiosCityData.data[0],
+        latitude: axiosCityData[0].lat,
+        longitude: axiosCityData[0].lon,
+        display_name: axiosCityData[0].display_name,
+        mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${axiosCityData.data[0].lat},${axiosCityData.data[0].lon}&zoom=10`,
+        error: false,
+        errorMsg: ''
+      })
+
+      this.handGetWeatherInfo(axiosCityData.data[0].lat, axiosCityData.data[0].lon)
+      this.handleGetMovieInfo(this.state.city);
+
+      let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
+
+      let movieDataFromAxios = await axios.get(movieURL);
+
+      this.setState({
+        movieData: movieDataFromAxios.data
+
+      })
+
     } catch (error) {
       this.setState({
         error: true,
         errorMsg: 'Error fetching data, ' + error.message,
         mapImageUrl: '',
+        forecastData: [],
+        movies: []
       });
     }
   }
 
+  handleCityMap = async (lat, lon) => {
+
+    let url = `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${lat},${lon}&zoom=1-18`
+    let axiosMapData = await axios.get(url);
+    console.log(axiosMapData);
+
+    this.setState({
+      mapData: axiosMapData.data
+    })
+  }
+
+
   getWeather = async (lat, lon) => {
     try {
-      let weatherUrl = `${process.env.REACT_APP_SERVER}/weather?lat=${lat}&lon=${lon}`;
+      let weatherUrl = `${process.env.REACT_APP_SERVER}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
       let weatherAxiosData = await axios.get(weatherUrl);
       let weatherData = weatherAxiosData.data;
+
       this.setState({
         weatherData,
-        error: false,
-        errorMsg: ''
       })
     } catch (error) {
+
       this.setState({
         error: true,
-        errorMsg: error.message
+        errorMsg: 'Error fetching data, ' + error.message,
+        forecastData: []
       })
     }
   }
 
-  getMovies = async () => {
-    try {
-      let movieUrl = `${process.env.REACT_APP_SERVER}/movie?searchQuery=${this.state.city}`;
-      let movieAxiosData = await axios.get(movieUrl);
-      let movieData = movieAxiosData.data;
+  // getMovies = async (searchQuery) => {
+  //   try {
+  //     let movieUrl = `${process.env.REACT_APP_SERVER}/movie?searchQuery=${searchQuery}`;
+  //     let movieAxiosData = await axios.get(movieUrl);
+  //     let movies = movieAxiosData.data;
 
-      this.setState({
-        movieData,
-        error: false,
-        errorMsg: ''
-      })
-    } catch (error) {
-      this.setState({
-        error: true,
-        errorMsg: error.message
-      })
-    }
-  }
+  //     this.setState({
+  //       movies: movies
+  //     })
+  //   } catch (error) {
+  //     this.setState({
+  //       error: true,
+  //       errorMsg: 'Error fetching data, ' + error.message,
+  //       moives: []
+  //     })
+  //   }
+  // }
 
   render() {
-    const isWeatherValid = (this.state.weather.date && this.state.weather.description)
     return (
       <div className='app-cont'>
         <h1 className='text-shadow'>City Explorer</h1>
         <form onSubmit={this.handleGetCityInfo} className='form-cont'>
           <label htmlFor='' className='text-shadow'> Enter City Name
-            <input type='text' onChange={this.handleGetCityInput} className='text-input'/>
+            <input type='text' onChange={this.handleGetCityInput} className='text-input' />
           </label>
           <button type='submit' className='sub-btn'>Explore!</button>
         </form>
@@ -122,17 +136,12 @@ class App extends React.Component {
                 <p className='text-shadow'>{this.state.locationData.display_name}</p>
                 <p className='text-shadow'>Latitude: {this.state.locationData.latitude}</p>
                 <p className='text-shadow'>Longitude: {this.state.locationData.longitude}</p>
-                {this.state.mapImageUrl && <Image rounded src={this.state.mapImageUrl} alt='City Map' />}
-                {isWeatherValid && 
-                <Weather
-                  date={this.state.weather.date}
-                  description={this.state.weather.description}
-                />
-                }
-                {this.state.movies.length > 0 && (
-                    <Movie movies={this.state.movies}/>
-                 
-                )}
+
+                <Image className='map' src={this.state.mapImageUrl} />
+
+                {this.state.forecastData.length > 0 && <Weather forecastData={this.state.forecastData} />}
+                {this.state.movieData.length > 0 && <Movies movieData={this.state.movieData} />}
+
               </div>
             )
         }

@@ -76,8 +76,8 @@ class App extends React.Component {
 
   getWeather = async (lat, lon) => {
     try {
-      let weatherUrl = `${process.env.REACT_APP_SERVER}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
-      let weatherAxiosData = await axios.get(weatherUrl);
+      let weatherURL = `${process.env.REACT_APP_SERVER}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
+      let weatherAxiosData = await axios.get(weatherURL);
       let weatherData = weatherAxiosData.data;
 
       this.setState({
@@ -109,8 +109,8 @@ class App extends React.Component {
             : (
               <div className='content'>
                 <p className='text-shadow'>{this.state.locationData.display_name}</p>
-                <p className='text-shadow'>Latitude: {this.state.locationData.latitude}</p>
-                <p className='text-shadow'>Longitude: {this.state.locationData.longitude}</p>
+                <p className='text-shadow'>Latitude: {this.state.locationData.lat}</p>
+                <p className='text-shadow'>Longitude: {this.state.locationData.lon}</p>
 
                 <Image className='map' src={this.state.mapImageUrl} />
 

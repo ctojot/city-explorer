@@ -83,28 +83,65 @@ class App extends React.Component {
     })
   }
 
+  formatAxiosError = (error) => {
+    if (error.response) {
+      return `Request failed with status ${error.response.status} ${error.response.statusText || ''}`.trim();
+    }
+
+    return error.message || 'Unknown error';
+  }
+
+  fetchWeatherFromOpenWeather = async (lat, lon) => {
+    const weatherApiKey = process.env.REACT_APP_WEATHER_API || process.env.REACT_WEATHER_API;
+    if (!weatherApiKey) {
+      throw new Error('Weather API key is missing. Set REACT_APP_WEATHER_API in your environment.');
+    }
+
+    let weatherURL = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=imperial&appid=${weatherApiKey}`;
+    let weatherAxiosData = await axios.get(weatherURL);
+
+    return weatherAxiosData.data.daily.map(day => ({
+      date: new Date(day.dt * 1000).toLocaleDateString(),
+      description: day.weather?.[0]?.description || ''
+    })).slice(0, 5);
+  }
+
+  fetchMovieDataFromTMDB = async (searchQuery) => {
+    const movieApiKey = process.env.REACT_APP_MOVIE_API || process.env.REACT_MOVIE_API;
+    if (!movieApiKey) {
+      throw new Error('Movie API key is missing. Set REACT_APP_MOVIE_API in your environment.');
+    }
+
+    let movieURL = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${encodeURIComponent(searchQuery)}&language=en-US&page=1`;
+    let movieAxiosData = await axios.get(movieURL);
+
+    return movieAxiosData.data.results.map(film => ({
+      title: film.title,
+      poster: film.poster_path || '',
+      voteRating: film.vote_average,
+      description: film.overview,
+    }));
+  }
+
   getWeather = async (lat, lon) => {
     try {
       const server = process.env.REACT_APP_SERVER;
       let weatherData;
 
       if (server) {
-        let weatherURL = `${server}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
-        let weatherAxiosData = await axios.get(weatherURL);
-        weatherData = weatherAxiosData.data;
-      } else {
-        const weatherApiKey = process.env.REACT_APP_WEATHER_API || process.env.REACT_WEATHER_API;
-        if (!weatherApiKey) {
-          throw new Error('Weather API key is missing. Set REACT_APP_WEATHER_API in your environment.');
+        try {
+          let weatherURL = `${server}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
+          let weatherAxiosData = await axios.get(weatherURL);
+          weatherData = weatherAxiosData.data;
+        } catch (error) {
+          if (process.env.REACT_APP_WEATHER_API || process.env.REACT_WEATHER_API) {
+            weatherData = await this.fetchWeatherFromOpenWeather(lat, lon);
+          } else {
+            throw error;
+          }
         }
-
-        let weatherURL = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=imperial&appid=${weatherApiKey}`;
-        let weatherAxiosData = await axios.get(weatherURL);
-
-        weatherData = weatherAxiosData.data.daily.map(day => ({
-          date: new Date(day.dt * 1000).toLocaleDateString(),
-          description: day.weather?.[0]?.description || ''
-        })).slice(0, 5);
+      } else {
+        weatherData = await this.fetchWeatherFromOpenWeather(lat, lon);
       }
 
       this.setState({
@@ -113,7 +150,7 @@ class App extends React.Component {
     } catch (error) {
       this.setState({
         error: true,
-        errorMsg: 'Error fetching data, ' + error.message,
+        errorMsg: 'Error fetching data, ' + this.formatAxiosError(error),
       });
     }
   }
@@ -122,25 +159,19 @@ class App extends React.Component {
     try {
       const server = process.env.REACT_APP_SERVER;
       if (server) {
-        let movieURL = `${server}/movies?searchQuery=${encodeURIComponent(searchQuery)}`;
-        let movieDataFromAxios = await axios.get(movieURL);
-        return movieDataFromAxios.data;
+        try {
+          let movieURL = `${server}/movies?searchQuery=${encodeURIComponent(searchQuery)}`;
+          let movieDataFromAxios = await axios.get(movieURL);
+          return movieDataFromAxios.data;
+        } catch (error) {
+          if (process.env.REACT_APP_MOVIE_API || process.env.REACT_MOVIE_API) {
+            return await this.fetchMovieDataFromTMDB(searchQuery);
+          }
+          throw error;
+        }
       }
 
-      const movieApiKey = process.env.REACT_APP_MOVIE_API || process.env.REACT_MOVIE_API;
-      if (!movieApiKey) {
-        throw new Error('Movie API key is missing. Set REACT_APP_MOVIE_API in your environment.');
-      }
-
-      let movieURL = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${encodeURIComponent(searchQuery)}&language=en-US&page=1`;
-      let movieAxiosData = await axios.get(movieURL);
-
-      return movieAxiosData.data.results.map(film => ({
-        title: film.title,
-        poster: film.poster_path || '',
-        voteRating: film.vote_average,
-        description: film.overview,
-      }));
+      return await this.fetchMovieDataFromTMDB(searchQuery);
     } catch (error) {
       throw error;
     }

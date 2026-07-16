@@ -7,7 +7,10 @@
 <!-- Provide a high level overview of what this application is and why you are building it, beyond the fact that it's an assignment for this class. (i.e. What's your problem domain?) -->
 
 ## Getting Started
-<!-- What are the steps that a user must take in order to build this app on their own machine and get it running? -->
+1. Copy `.env.sample` to `.env`.
+2. Set `REACT_APP_LOCATIONIQ_API`, `REACT_APP_WEATHER_API`, and `REACT_APP_MOVIE_API` in your `.env` file.
+3. Optionally set `REACT_APP_SERVER` if you have a backend proxy available.
+4. Run `npm install` and `npm start`.
 
 ## Architecture
 <!-- Provide a detailed description of the application design. What technologies (languages, libraries, etc) you're using, and any other relevant design information. -->

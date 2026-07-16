@@ -32,8 +32,17 @@ class App extends React.Component {
     event.preventDefault();
 
     try {
-      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city}&format=json`;
+      const cityQuery = this.state.city.trim();
+      if (!cityQuery) {
+        throw new Error('Please enter a city name.');
+      }
+
+      let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${encodeURIComponent(cityQuery)}&format=json`;
       let axiosCityData = await axios.get(url);
+
+      if (!axiosCityData.data || axiosCityData.data.length === 0) {
+        throw new Error(`No location found for ${cityQuery}`);
+      }
 
       const location = axiosCityData.data[0];
       const latitude = location.lat;
@@ -47,17 +56,14 @@ class App extends React.Component {
         mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${latitude},${longitude}&zoom=12&size=600x400&format=png&maptype=roadmap&markers=icon:large-red-cutout|${latitude},${longitude}`,
         error: false,
         errorMsg: ''
-      })
+      });
 
-      this.getWeather(latitude, longitude)
-      
-      let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
-      let movieDataFromAxios = await axios.get(movieURL);
+      await this.getWeather(latitude, longitude);
+      const movieData = await this.getMovieData(cityQuery);
 
       this.setState({
-        movieData: movieDataFromAxios.data
-      })
-
+        movieData
+      });
     } catch (error) {
       this.setState({
         error: true,
@@ -77,22 +83,66 @@ class App extends React.Component {
     })
   }
 
-
   getWeather = async (lat, lon) => {
     try {
-      let weatherURL = `${process.env.REACT_APP_SERVER}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
-      let weatherAxiosData = await axios.get(weatherURL);
-      let weatherData = weatherAxiosData.data;
+      const server = process.env.REACT_APP_SERVER;
+      let weatherData;
+
+      if (server) {
+        let weatherURL = `${server}/weather?lat=${lat}&lon=${lon}&searchQuery=${this.state.city}`;
+        let weatherAxiosData = await axios.get(weatherURL);
+        weatherData = weatherAxiosData.data;
+      } else {
+        const weatherApiKey = process.env.REACT_APP_WEATHER_API || process.env.REACT_WEATHER_API;
+        if (!weatherApiKey) {
+          throw new Error('Weather API key is missing. Set REACT_APP_WEATHER_API in your environment.');
+        }
+
+        let weatherURL = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=imperial&appid=${weatherApiKey}`;
+        let weatherAxiosData = await axios.get(weatherURL);
+
+        weatherData = weatherAxiosData.data.daily.map(day => ({
+          date: new Date(day.dt * 1000).toLocaleDateString(),
+          description: day.weather?.[0]?.description || ''
+        })).slice(0, 5);
+      }
 
       this.setState({
         forecastData: weatherData,
-      })
+      });
     } catch (error) {
-
       this.setState({
         error: true,
         errorMsg: 'Error fetching data, ' + error.message,
-      })
+      });
+    }
+  }
+
+  getMovieData = async (searchQuery) => {
+    try {
+      const server = process.env.REACT_APP_SERVER;
+      if (server) {
+        let movieURL = `${server}/movies?searchQuery=${encodeURIComponent(searchQuery)}`;
+        let movieDataFromAxios = await axios.get(movieURL);
+        return movieDataFromAxios.data;
+      }
+
+      const movieApiKey = process.env.REACT_APP_MOVIE_API || process.env.REACT_MOVIE_API;
+      if (!movieApiKey) {
+        throw new Error('Movie API key is missing. Set REACT_APP_MOVIE_API in your environment.');
+      }
+
+      let movieURL = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${encodeURIComponent(searchQuery)}&language=en-US&page=1`;
+      let movieAxiosData = await axios.get(movieURL);
+
+      return movieAxiosData.data.results.map(film => ({
+        title: film.title,
+        poster: film.poster_path || '',
+        voteRating: film.vote_average,
+        description: film.overview,
+      }));
+    } catch (error) {
+      throw error;
     }
   }
 

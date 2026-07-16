@@ -35,17 +35,21 @@ class App extends React.Component {
       let url = `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API}&q=${this.state.city}&format=json`;
       let axiosCityData = await axios.get(url);
 
+      const location = axiosCityData.data[0];
+      const latitude = location.lat;
+      const longitude = location.lon;
+
       this.setState({
-        locationData: axiosCityData.data[0],
-        lat: axiosCityData[0].lat,
-        lon: axiosCityData[0].lon,
-        display_name: axiosCityData[0].display_name,
-        mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${axiosCityData.data[0].lat},${axiosCityData.data[0].lon}&zoom=12&size=<width>x<height>&format=<format>&maptype=<MapType>&markers=icon:<icon>|<latitude>,<longitude>&markers=icon:<icon>|<latitude>,<longitude>`,
+        locationData: location,
+        lat: latitude,
+        lon: longitude,
+        display_name: location.display_name,
+        mapImageUrl: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATIONIQ_API}&center=${latitude},${longitude}&zoom=12&size=600x400&format=png&maptype=roadmap&markers=icon:large-red-cutout|${latitude},${longitude}`,
         error: false,
         errorMsg: ''
       })
 
-      this.handGetWeatherInfo(axiosCityData.data[0].latitude, axiosCityData.data[0].longitude)
+      this.getWeather(latitude, longitude)
       
       let movieURL = `${process.env.REACT_APP_SERVER}/movies?searchQuery=${this.state.city}`
       let movieDataFromAxios = await axios.get(movieURL);
@@ -81,7 +85,7 @@ class App extends React.Component {
       let weatherData = weatherAxiosData.data;
 
       this.setState({
-        weatherData,
+        forecastData: weatherData,
       })
     } catch (error) {
 
